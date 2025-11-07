@@ -1,7 +1,6 @@
 import discord
 import requests
 import json
-import os
 import random
 from discord import app_commands
 from discord.ext import commands
@@ -9,6 +8,7 @@ from discord.ui import View,Button
 from threading import Timer
 intents = discord.Intents.default()
 intents.messages = True
+intents.message_content = True
 bot = commands.Bot(intents=intents, command_prefix="?")
 def get_question(local_list, repeat_list, api_func):
     num = random.randint(0, 1)
@@ -39,35 +39,35 @@ class GameButtonView(View):
 
     @discord.ui.button(label="Truth", style=discord.ButtonStyle.gray, custom_id="persistent_truth")
     async def truth_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        r1 = self.get_question(Truth, Repeat_Truth, get_truth)
+        r1 = get_question(Truth, Repeat_Truth, get_truth)
         embed = discord.Embed(title=r1, color=0xe5deca)
         embed.set_footer(text=f"Requested by {interaction.user.name}.", icon_url=f"{interaction.user.avatar}")
         await interaction.response.send_message(embed=embed, view=self)
 
     @discord.ui.button(label="Dare", style=discord.ButtonStyle.gray, custom_id="persistent_dare")
     async def dare_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        r1 = self.get_question(Dare, Repeat_Dare, get_dare)
+        r1 = get_question(Dare, Repeat_Dare, get_dare)
         embed = discord.Embed(title=r1, color=0xe5deca)
         embed.set_footer(text=f"Requested by {interaction.user.name}.", icon_url=f"{interaction.user.avatar}")
         await interaction.response.send_message(embed=embed, view=self)
 
     @discord.ui.button(label="Would You Rather", style=discord.ButtonStyle.gray, custom_id="persistent_wyr")
     async def wyr_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        r1 = self.get_question(Wyr, Repeat_Wyr, get_wyr)
+        r1 = get_question(Wyr, Repeat_Wyr, get_wyr)
         embed = discord.Embed(title=r1, color=0xe5deca)
         embed.set_footer(text=f"Requested by {interaction.user.name}.", icon_url=f"{interaction.user.avatar}")
         await interaction.response.send_message(embed=embed, view=self)
 
     @discord.ui.button(label="Most Likely", style=discord.ButtonStyle.gray, custom_id="persistent_ml")
     async def ml_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        r1 = self.get_question(MostLikely, Repeat_MostLikely, get_who)
+        r1 = get_question(MostLikely, Repeat_MostLikely, get_who)
         embed = discord.Embed(title=r1, color=0xe5deca)
         embed.set_footer(text=f"Requested by {interaction.user.name}.", icon_url=f"{interaction.user.avatar}")
         await interaction.response.send_message(embed=embed, view=self)
 
     @discord.ui.button(label="Never Have I Ever", style=discord.ButtonStyle.gray, custom_id="persistent_nhie")
     async def nhie_button(self, interaction: discord.Interaction, button: discord.ui.Button):
-        r1 = self.get_question(Nhie, Repeat_Nhie, get_nhie)
+        r1 = get_question(Nhie, Repeat_Nhie, get_nhie)
         embed = discord.Embed(title=r1, color=0xe5deca)
         embed.set_footer(text=f"Requested by {interaction.user.name}.", icon_url=f"{interaction.user.avatar}")
         await interaction.response.send_message(embed=embed, view=self)
@@ -1235,4 +1235,4 @@ def read_token():
         lines=f.readlines()
         return lines[0].strip()
 print("Starting bot...")
-bot.run(os.getenv("TOKEN"))
+bot.run(read_token())
