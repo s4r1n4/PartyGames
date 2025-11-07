@@ -2,6 +2,7 @@ import discord
 import requests
 import json
 import random
+import os
 from discord import app_commands
 from discord.ext import commands
 from discord.ui import View,Button
@@ -1235,4 +1236,4 @@ def read_token():
         lines=f.readlines()
         return lines[0].strip()
 print("Starting bot...")
-bot.run(read_token())
+bot.run(os.getenv("TOKEN"))
