@@ -1234,4 +1234,4 @@ def read_token():
         lines=f.readlines()
         return lines[0].strip()
 print("Starting bot...")
-bot.run(read_token())
+bot.run(os.getenv("TOKEN"))
