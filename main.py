@@ -9,11 +9,68 @@ from threading import Timer
 intents = discord.Intents.default()
 intents.messages = True
 bot = commands.Bot(intents=intents, command_prefix="?")
-tbutton=Button(label="Truth",style=discord.ButtonStyle.gray)
-dbutton=Button(label="Dare",style=discord.ButtonStyle.gray)
-wyrbutton=Button(label="Would You Rather",style=discord.ButtonStyle.gray)
-mlbutton=Button(label="Most Likely",style=discord.ButtonStyle.gray)
-nhiebutton=Button(label="Never Have I Ever",style=discord.ButtonStyle.gray)
+def get_question(local_list, repeat_list, api_func):
+    num = random.randint(0, 1)
+    if num == 0:
+        # Use local list
+        if not local_list: 
+            print(f"Refilling {local_list.__name__} from repeats...")
+            local_list.extend(repeat_list)  # Refill
+            repeat_list.clear()             # Clear repeats
+
+        if not local_list: # If still empty (e.g., first run and no repeats)
+              return "Oops, I ran out of questions! Please try another category."
+
+        r1 = random.choice(local_list)
+        repeat_list.append(r1)
+        local_list.remove(r1)
+    else:
+        # Use API
+        try:
+            r1 = api_func()
+        except Exception as e:
+            print(f"API Error: {e}")
+            r1 = "The API seems to be down. Try a local question."
+    return r1
+class GameButtonView(View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="Truth", style=discord.ButtonStyle.gray, custom_id="persistent_truth")
+    async def truth_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        r1 = self.get_question(Truth, Repeat_Truth, get_truth)
+        embed = discord.Embed(title=r1, color=0xe5deca)
+        embed.set_footer(text=f"Requested by {interaction.user.name}.", icon_url=f"{interaction.user.avatar}")
+        await interaction.response.send_message(embed=embed, view=self)
+
+    @discord.ui.button(label="Dare", style=discord.ButtonStyle.gray, custom_id="persistent_dare")
+    async def dare_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        r1 = self.get_question(Dare, Repeat_Dare, get_dare)
+        embed = discord.Embed(title=r1, color=0xe5deca)
+        embed.set_footer(text=f"Requested by {interaction.user.name}.", icon_url=f"{interaction.user.avatar}")
+        await interaction.response.send_message(embed=embed, view=self)
+
+    @discord.ui.button(label="Would You Rather", style=discord.ButtonStyle.gray, custom_id="persistent_wyr")
+    async def wyr_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        r1 = self.get_question(Wyr, Repeat_Wyr, get_wyr)
+        embed = discord.Embed(title=r1, color=0xe5deca)
+        embed.set_footer(text=f"Requested by {interaction.user.name}.", icon_url=f"{interaction.user.avatar}")
+        await interaction.response.send_message(embed=embed, view=self)
+
+    @discord.ui.button(label="Most Likely", style=discord.ButtonStyle.gray, custom_id="persistent_ml")
+    async def ml_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        r1 = self.get_question(MostLikely, Repeat_MostLikely, get_who)
+        embed = discord.Embed(title=r1, color=0xe5deca)
+        embed.set_footer(text=f"Requested by {interaction.user.name}.", icon_url=f"{interaction.user.avatar}")
+        await interaction.response.send_message(embed=embed, view=self)
+
+    @discord.ui.button(label="Never Have I Ever", style=discord.ButtonStyle.gray, custom_id="persistent_nhie")
+    async def nhie_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        r1 = self.get_question(Nhie, Repeat_Nhie, get_nhie)
+        embed = discord.Embed(title=r1, color=0xe5deca)
+        embed.set_footer(text=f"Requested by {interaction.user.name}.", icon_url=f"{interaction.user.avatar}")
+        await interaction.response.send_message(embed=embed, view=self)
+
 
 MostLikely = [
     "Who is most likely to win an Oscar Award? ",
@@ -783,11 +840,6 @@ def get_wyr():
   json_data=json.loads(response.text)
   wyr=json_data.get('question')
   return wyr
-def get_wyr():
-  response=requests.get("https://api.truthordarebot.xyz/api/wyr")
-  json_data=json.loads(response.text)
-  wyr=json_data.get('question')
-  return wyr
 def get_who():
   response=requests.get("https://api.truthordarebot.xyz/api/paranoia")
   json_data=json.loads(response.text)
@@ -1073,18 +1125,28 @@ Repeat_Nhie = []
 Repeat_MostLikely = []
 Repeat_Wyr = []
 Repeat_Anything = []
+
 @bot.event
 async def on_ready():
-  print('We have logged in as {0.user}'.format(bot))
-  await bot.change_presence(activity=discord.Game('party games <3'))
-  print('Connected to bot: {}'.format(bot.user.name))
-  print('Bot ID: {}'.format(bot.user.id))
+    print('We have logged in as {0.user}'.format(bot))
+    await bot.change_presence(activity=discord.Game('party games <3'))
+    
+    # This is CRITICAL. It registers the persistent view class.
+    bot.add_view(GameButtonView()) 
 
+    try:
+        synced = await bot.tree.sync()
+        print(f"Synced {len(synced)} slash command(s).")
+    except Exception as e:
+        print(f"Failed to sync commands: {e}")
+
+# This command is unchanged
 @bot.tree.command(description='Answer anonymously.')
 async def anon(interaction, message:str):
     embed=discord.Embed(title="Anonymous response", description=message, color=0xb5bad2)
     await interaction.response.send_message(embed=embed)
-  
+
+# This command is unchanged
 @bot.tree.command(description='Provides a list of all commands with their functions.')
 async def help(interaction):
     embed=discord.Embed(title="List of Commands", description="This is a list of all the commands you can give to the bot.", color=0xe5deca, url="https://discord.com/api/oauth2/authorize?client_id=891296558920925255&permissions=120832&scope=bot")
@@ -1100,263 +1162,76 @@ async def help(interaction):
     embed.add_field(name="`anon`", value="Respond to a question without revealing your identity.", inline=False)
     await interaction.response.send_message(embed=embed)
 
+# All game commands are now simple: get a question, send the embed and view.
 @bot.tree.command(description="Sends a 'Who's Most Likely To' question.")
 async def who(interaction):
-  view=View()
-  view.add_item(tbutton)
-  view.add_item(dbutton)
-  view.add_item(wyrbutton)
-  view.add_item(mlbutton)
-  view.add_item(nhiebutton)
-  num=random.randint(0,1)
-  if num==0:
-    r1=random.choice(MostLikely)
-  else:
-    r1=get_who()
-  if r1 in MostLikely:
-    Repeat_MostLikely.append(r1)
-    MostLikely.remove(r1)
+  r1 = get_question(MostLikely, Repeat_MostLikely, get_who)
   embed=discord.Embed(title=r1, color=0xe5deca)
   embed.set_footer(text=f"Requested by {interaction.user.name}.",icon_url=f"{interaction.user.avatar}")
-  await interaction.response.send_message(embed=embed, view=view)
+  await interaction.response.send_message(embed=embed, view=GameButtonView())
 
 @bot.tree.command(description="Sends a 'Never Have I Ever' question.")
 async def nhie(interaction):
-  view=View()
-  view.add_item(tbutton)
-  view.add_item(dbutton)
-  view.add_item(wyrbutton)
-  view.add_item(mlbutton)
-  view.add_item(nhiebutton)
-  num=random.randint(0,1)
-  if num==0:
-    r1=random.choice(Nhie)
-  else:
-    r1=get_nhie()
-  if r1 in Nhie:
-    Repeat_Nhie.append(r1)
-    Nhie.remove(r1)
+  r1 = get_question(Nhie, Repeat_Nhie, get_nhie)
   embed=discord.Embed(title=r1, color=0xe5deca)
   embed.set_footer(text=f"Requested by {interaction.user.name}.", icon_url=f"{interaction.user.avatar}")
-  await interaction.response.send_message(embed=embed, view=view)
-
+  await interaction.response.send_message(embed=embed, view=GameButtonView())
 
 @bot.tree.command(description="Sends a 'truth' question.")
 async def truth(interaction):
-  view=View()
-  view.add_item(tbutton)
-  view.add_item(dbutton)
-  view.add_item(wyrbutton)
-  view.add_item(mlbutton)
-  view.add_item(nhiebutton)
-  num=random.randint(0,1)
-  if num==0:
-    r1=random.choice(Truth)
-  else:
-    r1=get_truth()
-  if r1 in Truth:
-    Repeat_Truth.append(r1)
-    Truth.remove(r1)
+  r1 = get_question(Truth, Repeat_Truth, get_truth)
   embed=discord.Embed(title=r1, color=0xe5deca)
   embed.set_footer(text=f"Requested by {interaction.user.name}.", icon_url=f"{interaction.user.avatar}")
-  await interaction.response.send_message(embed=embed, view=view)
+  await interaction.response.send_message(embed=embed, view=GameButtonView())
 
 @bot.tree.command(description="Sends a dare.")
 async def dare(interaction):
-  view=View()
-  view.add_item(tbutton)
-  view.add_item(dbutton)
-  view.add_item(wyrbutton)
-  view.add_item(mlbutton)
-  view.add_item(nhiebutton)
-  num=random.randint(0,1)
-  if num==0:
-    r1=random.choice(Dare)
-  else:
-    r1=get_dare()
-  if r1 in Dare:
-    Repeat_Dare.append(r1)
-    Dare.remove(r1)
+  r1 = get_question(Dare, Repeat_Dare, get_dare)
   embed=discord.Embed(title=r1, color=0xe5deca)
   embed.set_footer(text=f"Requested by {interaction.user.name}.", icon_url=f"{interaction.user.avatar}")
-  await interaction.response.send_message(embed=embed, view=view)
+  await interaction.response.send_message(embed=embed, view=GameButtonView())
 
 @bot.tree.command(description="Sends a truth or a dare.")
 async def td(interaction):
-  view=View()
-  view.add_item(tbutton)
-  view.add_item(dbutton)
-  view.add_item(wyrbutton)
-  view.add_item(mlbutton)
-  view.add_item(nhiebutton)
-  num=random.randint(0,2)
-  if num==0:
-    r1=random.choice(Truth)
-  elif num==1:
-    r1=get_truth()
-  elif num==2:
-    r1=get_dare()
-  if r1 in TD:
-    Repeat_TD.append(r1)
-    TD.remove(r1)
+  # 50/50 chance for truth or dare
+  if random.randint(0, 1) == 0:
+      r1 = get_question(Truth, Repeat_Truth, get_truth)
+  else:
+      r1 = get_question(Dare, Repeat_Dare, get_dare)
+      
   embed=discord.Embed(title=r1, color=0xe5deca)
   embed.set_footer(text=f"Requested by {interaction.user.name}.", icon_url=f"{interaction.user.avatar}")
-  await interaction.response.send_message(embed=embed, view=view)
+  await interaction.response.send_message(embed=embed, view=GameButtonView())
+
 @bot.tree.command(description="Sends a random question from all available types of questions.")
 async def rdm(interaction):
-  view=View()
-  view.add_item(tbutton)
-  view.add_item(dbutton)
-  view.add_item(wyrbutton)
-  view.add_item(mlbutton)
-  num=random.randint(0,5)
-  if num==0:
-    r1=random.choice(Anything)
-  elif num==1:
-    r1=get_truth()
-  elif num==2:
-    r1=get_dare()
-  elif num==3:
-    r1=get_wyr()
-  elif num==4:
-    r1=get_nhie()
-  elif num==5:
-    r1=get_who()
-  if r1 in Anything:
-    Repeat_Anything.append(r1)
-    Anything.remove(r1)
+  # Pick one of the 5 game types at random
+  num = random.randint(0, 4)
+  if num == 0:
+      r1 = get_question(Truth, Repeat_Truth, get_truth)
+  elif num == 1:
+      r1 = get_question(Dare, Repeat_Dare, get_dare)
+  elif num == 2:
+      r1 = get_question(Wyr, Repeat_Wyr, get_wyr)
+  elif num == 3:
+      r1 = get_question(MostLikely, Repeat_MostLikely, get_who)
+  else: # num == 4
+      r1 = get_question(Nhie, Repeat_Nhie, get_nhie)
+
   embed=discord.Embed(title=r1, color=0xe5deca)
   embed.set_footer(text=f"Requested by {interaction.user.name}.", icon_url=f"{interaction.user.avatar}")
-  await interaction.response.send_message(embed=embed, view=view)
+  await interaction.response.send_message(embed=embed, view=GameButtonView())
 
 @bot.tree.command(description="Sends a 'Would You Rather' question.")
 async def wyr(interaction):
-  view=View()
-  view.add_item(tbutton)
-  view.add_item(dbutton)
-  view.add_item(wyrbutton)
-  view.add_item(mlbutton)
-  view.add_item(nhiebutton)
-  num=random.randint(0,1)
-  if num==0:
-    r1=random.choice(Wyr)
-  else:
-    r1=get_wyr()
-  if r1 in Wyr:
-    Repeat_Wyr.append(r1)
-    Wyr.remove(r1)
+  r1 = get_question(Wyr, Repeat_Wyr, get_wyr)
   embed=discord.Embed(title=r1, color=0xe5deca)
   embed.set_footer(text=f"Requested by {interaction.user.name}.", icon_url=f"{interaction.user.avatar}")
-  await interaction.response.send_message(embed=embed, view=view)
-
-async def truth_callback(interaction):
-  view=View()
-  view.add_item(tbutton)
-  view.add_item(dbutton)
-  view.add_item(wyrbutton)
-  view.add_item(mlbutton)
-  view.add_item(nhiebutton)
-  num=random.randint(0,1)
-  if num==0:
-    r1=random.choice(Truth)
-  else:
-    r1=get_truth()
-  if r1 in Truth:
-    Repeat_Truth.append(r1)
-    Truth.remove(r1)
-  embed=discord.Embed(title=r1, color=0xe5deca)
-  embed.set_footer(text=f"Requested by {interaction.user.name}.", icon_url=f"{interaction.user.avatar}")
-  await interaction.response.send_message(embed=embed, view=view)
-tbutton.callback=truth_callback
-
-async def dare_callback(interaction):
-  view=View()
-  view.add_item(tbutton)
-  view.add_item(dbutton)
-  view.add_item(wyrbutton)
-  view.add_item(mlbutton)
-  view.add_item(nhiebutton)
-  num=random.randint(0,1)
-  if num==0:
-    r1=random.choice(Dare)
-  else:
-    r1=get_dare()
-  if r1 in Dare:
-    Repeat_Dare.append(r1)
-    Dare.remove(r1)
-  embed=discord.Embed(title=r1, color=0xe5deca)
-  embed.set_footer(text=f"Requested by {interaction.user.name}.", icon_url=f"{interaction.user.avatar}")
-  await interaction.response.send_message(embed=embed, view=view)
-dbutton.callback=dare_callback
-
-
-async def wyr_callback(interaction):
-  view=View()
-  view.add_item(tbutton)
-  view.add_item(dbutton)
-  view.add_item(wyrbutton)
-  view.add_item(mlbutton)
-  view.add_item(nhiebutton)
-  num=random.randint(0,1)
-  if num==0:
-    r1=random.choice(Wyr)
-  else:
-    r1=get_wyr()
-  if r1 in Wyr:
-    Repeat_Wyr.append(r1)
-    Wyr.remove(r1)
-  embed=discord.Embed(title=r1, color=0xe5deca)
-  embed.set_footer(text=f"Requested by {interaction.user.name}.", icon_url=f"{interaction.user.avatar}")
-  await interaction.response.send_message(embed=embed, view=view)
-
-wyrbutton.callback=wyr_callback
-
-async def nhie_callback(interaction):
-  view=View()
-  view.add_item(tbutton)
-  view.add_item(dbutton)
-  view.add_item(wyrbutton)
-  view.add_item(mlbutton)
-  view.add_item(nhiebutton)
-  num=random.randint(0,1)
-  if num==0:
-    r1=random.choice(Nhie)
-  else:
-    r1=get_nhie()
-  if r1 in Nhie:
-    Repeat_Nhie.append(r1)
-    Nhie.remove(r1)
-  embed=discord.Embed(title=r1, color=0xe5deca)
-  embed.set_footer(text=f"Requested by {interaction.user.name}.", icon_url=f"{interaction.user.avatar}")
-  await interaction.response.send_message(embed=embed, view=view)
-nhiebutton.callback=nhie_callback
-
-async def ml_callback(interaction):
-  view=View()
-  view.add_item(tbutton)
-  view.add_item(dbutton)
-  view.add_item(wyrbutton)
-  view.add_item(mlbutton)
-  view.add_item(nhiebutton)
-  num=random.randint(0,1)
-  if num==0:
-    r1=random.choice(MostLikely)
-  else:
-    r1=get_who()
-  if r1 in MostLikely:
-    Repeat_MostLikely.append(r1)
-    MostLikely.remove(r1)
-  embed=discord.Embed(title=r1, color=0xe5deca)
-  embed.set_footer(text=f"Requested by {interaction.user.name}.", icon_url=f"{interaction.user.avatar}")
-  await interaction.response.send_message(embed=embed, view=view)
-mlbutton.callback=ml_callback
+  await interaction.response.send_message(embed=embed, view=GameButtonView())
 
 def read_token():
     with open("token.txt", "r") as f:
         lines=f.readlines()
         return lines[0].strip()
-try:
-    bot.run(read_token())
-except discord.errors.HTTPException:
-    print("\n\n\nBLOCKED BY RATE LIMITS\nRESTARTING NOW\n\n\n")
-    system('kill 1')
+print("Starting bot...")
+bot.run(read_token())
