@@ -1143,10 +1143,16 @@ async def on_ready():
         print(f"Failed to sync commands: {e}")
 
 # This command is unchanged
-@bot.tree.command(description='Answer anonymously.')
-async def anon(interaction, message:str):
-    embed=discord.Embed(title="Anonymous response", description=message, color=0xb5bad2)
-    await interaction.response.send_message(embed=embed)
+@bot.tree.command(description='Send a message anonymously through the bot.')
+async def anon(interaction: discord.Interaction, message: str):
+    await interaction.response.send_message("Your anonymous message has been sent!", ephemeral=True)
+    
+    embed = discord.Embed(
+        title="Anonymous message",
+        description=message,
+        color=0xb5bad2
+    )
+    await interaction.channel.send(embed=embed)
 
 # This command is unchanged
 @bot.tree.command(description='Provides a list of all commands with their functions.')
