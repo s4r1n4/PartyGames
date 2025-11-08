@@ -1150,7 +1150,7 @@ async def anon(interaction: discord.Interaction, message: str):
     embed = discord.Embed(
         title="Anonymous message",
         description=message,
-        color=0xb5bad2
+        color=0xe5deca
     )
     await interaction.channel.send(embed=embed)
 
