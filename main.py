@@ -57,7 +57,7 @@ class GameButtonView(View):
         r1 = self.get_question_wrapper(Truth, Repeat_Truth, get_truth)
         embed = discord.Embed(title=r1, color=0xe5deca)
         if self.rating:
-            embed.set_footer(text=f"Rating: {self.rating} | Requested by {interaction.user.name}", icon_url=f"{interaction.user.avatar}")
+            embed.set_footer(text=f"Requested by {interaction.user.name}", icon_url=f"{interaction.user.avatar}")
         else:
             embed.set_footer(text=f"Requested by {interaction.user.name}", icon_url=f"{interaction.user.avatar}")
         
@@ -69,7 +69,7 @@ class GameButtonView(View):
         r1 = self.get_question_wrapper(Dare, Repeat_Dare, get_dare)
         embed = discord.Embed(title=r1, color=0xe5deca)
         if self.rating:
-            embed.set_footer(text=f"Rating: {self.rating} | Requested by {interaction.user.name}", icon_url=f"{interaction.user.avatar}")
+            embed.set_footer(text=f"Requested by {interaction.user.name}", icon_url=f"{interaction.user.avatar}")
         else:
             embed.set_footer(text=f"Requested by {interaction.user.name}", icon_url=f"{interaction.user.avatar}")
         await interaction.response.send_message(embed=embed, view=self)
@@ -79,7 +79,7 @@ class GameButtonView(View):
         r1 = self.get_question_wrapper(Wyr, Repeat_Wyr, get_wyr)
         embed = discord.Embed(title=r1, color=0xe5deca)
         if self.rating:
-            embed.set_footer(text=f"Rating: {self.rating} | Requested by {interaction.user.name}", icon_url=f"{interaction.user.avatar}")
+            embed.set_footer(text=f"Requested by {interaction.user.name}", icon_url=f"{interaction.user.avatar}")
         else:
             embed.set_footer(text=f"Requested by {interaction.user.name}", icon_url=f"{interaction.user.avatar}")
         await interaction.response.send_message(embed=embed, view=self)
@@ -89,7 +89,7 @@ class GameButtonView(View):
         r1 = self.get_question_wrapper(MostLikely, Repeat_MostLikely, get_who)
         embed = discord.Embed(title=r1, color=0xe5deca)
         if self.rating:
-            embed.set_footer(text=f"Rating: {self.rating} | Requested by {interaction.user.name}", icon_url=f"{interaction.user.avatar}")
+            embed.set_footer(text=f"Requested by {interaction.user.name}", icon_url=f"{interaction.user.avatar}")
         else:
             embed.set_footer(text=f"Requested by {interaction.user.name}", icon_url=f"{interaction.user.avatar}")
         await interaction.response.send_message(embed=embed, view=self)
@@ -99,7 +99,7 @@ class GameButtonView(View):
         r1 = self.get_question_wrapper(Nhie, Repeat_Nhie, get_nhie)
         embed = discord.Embed(title=r1, color=0xe5deca)
         if self.rating:
-            embed.set_footer(text=f"Rating: {self.rating} | Requested by {interaction.user.name}", icon_url=f"{interaction.user.avatar}")
+            embed.set_footer(text=f"Requested by {interaction.user.name}", icon_url=f"{interaction.user.avatar}")
         else:
             embed.set_footer(text=f"Requested by {interaction.user.name}", icon_url=f"{interaction.user.avatar}")
         await interaction.response.send_message(embed=embed, view=self)
